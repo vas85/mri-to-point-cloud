@@ -5,6 +5,7 @@
   <style>
     body { margin: 0; }
     canvas { width: 100%; height: 100% }
+		.progress-container { height: 50px; width: 100%; position: absolute; background: black; color: white; font-family: Arial; text-align: center; padding-top: 20px;}
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js" integrity="sha512-yNJzAsg5JyP91u+sLHlUDULMBd3hmEiVkYeeN1cQBKaLZ7EyT6oH2u5THNIRM2Fu6VKcZJv+F/QAp1h/qzy9Ow==" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/gh/ashblue/simple-tween-js/tween.min.js"></script>
@@ -12,6 +13,9 @@
   <script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/controls/TrackballControls.js"></script>
 </head>
 <body>
+		<div id="progress-bar" class="progress-container">
+				<span id="progress-value">0%</span>
+		</div>
 </body>
 <script>
   init();
@@ -27,13 +31,6 @@
         camera.lookAt(0, 0, 0);
 				scene.add(camera);
 
-        // initial animation
-        scene.initialWalk = new Tween(20 /*startValue*/,
-                                      60 /*distance*/,
-                                      1000 /*duration*/,
-                                      'cubeOut',
-                                      false /*loop*/);
-
 				renderer = new THREE.WebGLRenderer({ antialias: true });
 				renderer.setPixelRatio(window.devicePixelRatio);
 				renderer.setSize(window.innerWidth, window.innerHeight);
@@ -41,12 +38,30 @@
 
 				const loader = new THREE.PCDLoader();
 				const pointCloudFilename = 'https://cdn.jsdelivr.net/gh/vas85/mri-to-point-cloud/pointcloud.pcd';
-        			loader.load(pointCloudFilename, function (points) {
-					scene.add(points);
-					const center = points.geometry.boundingSphere.center;
-					controls.target.set(center.x, center.y, center.z);
-					controls.update();
-				});
+				loader.load(pointCloudFilename,
+					// onload
+					function (points) {
+						document.getElementById("progress-bar").style.display = "none";
+						scene.add(points);
+						const center = points.geometry.boundingSphere.center;
+						controls.target.set(center.x, center.y, center.z);
+						controls.update();
+						// initial animation
+						scene.initialWalk = new Tween(20 /*startValue*/,
+                                      		60 /*distance*/,
+                                      		1000 /*duration*/,
+                                      		'cubeOut',
+                                      		false /*loop*/);
+					},
+					// onprogress
+					function (xhr) {
+						if (xhr && xhr.loaded <= xhr.total) {
+							const loadStr = Math.round(xhr.loaded / xhr.total * 100) + '%';
+							document.getElementById("progress-value").innerText = loadStr;
+							console.log(loadStr);
+						}
+					}
+				);
 
 				container = document.createElement('div');
 				document.body.appendChild(container);
@@ -89,7 +104,7 @@
 
 			function animate() {
 				requestAnimationFrame(animate);
-				if (!scene.initialWalk.expired()) {
+				if (scene.initialWalk && !scene.initialWalk.expired()) {
           camera.setFocalLength(scene.initialWalk.getValue())
         } else {
           controls.staticMoving = false;
