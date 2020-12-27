@@ -40,7 +40,7 @@
 				document.body.appendChild(renderer.domElement);
 
 				const loader = new THREE.PCDLoader();
-				const pointCloudFilename = 'https://github.com/vas85/mri-to-point-cloud/blob/main/pointcloud.pcd?raw=true';
+				const pointCloudFilename = 'https://cdn.jsdelivr.net/gh/vas85/mri-to-point-cloud/pointcloud.pcd';
         			loader.load(pointCloudFilename, function (points) {
 					scene.add(points);
 					const center = points.geometry.boundingSphere.center;
